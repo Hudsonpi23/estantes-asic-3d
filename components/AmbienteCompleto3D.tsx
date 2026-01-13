@@ -584,6 +584,55 @@ export default function AmbienteCompleto3D() {
             >
               🟢 AR FRIO DA COLMEIA
             </Text>
+
+            {/* ========== CAIXA DE 3 PAREDES ATRÁS DA COLMEIA (SEM TELHADO) ========== */}
+            {/* Para esconder a colmeia e abafar o som das máquinas */}
+            {(() => {
+              const boxDepth = 1.5 // Profundidade da caixa (1.5m para fora)
+              const boxHeight = COLD_AISLE.height // Mesma altura
+              const boxWidth = COLD_AISLE.width + 0.4 // Um pouco mais larga
+              const boxZ = colmeiaZ + boxDepth / 2 + 0.1 // Posição Z da caixa
+              
+              return (
+                <group>
+                  {/* PAREDE TRASEIRA (fundo da caixa) */}
+                  <GalvanizedWall
+                    position={[0, boxHeight / 2, colmeiaZ + boxDepth]}
+                    size={[boxWidth, boxHeight, ROOM.wallThickness]}
+                  />
+                  
+                  {/* PAREDE LATERAL ESQUERDA */}
+                  <GalvanizedWall
+                    position={[-boxWidth / 2, boxHeight / 2, boxZ]}
+                    size={[ROOM.wallThickness, boxHeight, boxDepth]}
+                  />
+                  
+                  {/* PAREDE LATERAL DIREITA */}
+                  <GalvanizedWall
+                    position={[boxWidth / 2, boxHeight / 2, boxZ]}
+                    size={[ROOM.wallThickness, boxHeight, boxDepth]}
+                  />
+                  
+                  {/* PISO da caixa */}
+                  <mesh position={[0, 0.02, boxZ]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <planeGeometry args={[boxWidth, boxDepth]} />
+                    <meshStandardMaterial color={COLORS.floor} roughness={0.9} />
+                  </mesh>
+                  
+                  {/* SEM TELHADO - aberto em cima */}
+                  
+                  {/* Label */}
+                  <Text
+                    position={[0, boxHeight + 0.2, boxZ]}
+                    fontSize={0.12}
+                    color="#94a3b8"
+                    anchorX="center"
+                  >
+                    🔇 CAIXA ACÚSTICA (SEM TELHADO)
+                  </Text>
+                </group>
+              )
+            })()}
           </group>
         )
       })()}
