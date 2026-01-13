@@ -22,7 +22,7 @@ const ROOM = {
 // COLD AISLE - Ambiente fechado do lado frio com COLMEIA
 const COLD_AISLE = {
   width: 6.0,          // Mesma largura das estantes
-  depth: 1.8,          // 1.80m de profundidade
+  depth: 3.5,          // 3.50m de profundidade (distância até a colmeia)
   height: 2.4,         // Mesma altura
   wallThickness: 0.1,
 }
