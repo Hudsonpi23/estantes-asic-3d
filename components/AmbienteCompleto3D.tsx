@@ -146,7 +146,7 @@ function SimpleASIC({ position }: { position: [number, number, number] }) {
 }
 
 // ============================================================
-// COMPONENTE: Estante Simplificada
+// COMPONENTE: Estante com Compensado e Máquinas Vazando
 // ============================================================
 function SimpleShelf({
   position,
@@ -162,17 +162,31 @@ function SimpleShelf({
   const gap = 0.05
   const totalWidth = machinesPerLevel * ASIC.width + (machinesPerLevel - 1) * gap
   const startX = -totalWidth / 2 + ASIC.width / 2
+  const plywoodThickness = 0.018 // 18mm compensado
+  
+  // Posição do compensado (fundo da estante)
+  const plywoodZ = SHELF.depth / 2 - plywoodThickness / 2
+  
+  // Posição das ASICs - 30% vazando para fora do compensado (lado quente)
+  const protrusion = ASIC.depth * 0.30 // 30% para fora
+  const asicZ = plywoodZ + protrusion - ASIC.depth / 2
 
   return (
     <group position={position}>
       {/* Estrutura metálica simplificada */}
       {/* Colunas */}
       {[-SHELF.length / 2, 0, SHELF.length / 2].map((x, i) => (
-        <mesh key={`col-${i}`} position={[x, SHELF.height / 2, 0]}>
+        <mesh key={`col-${i}`} position={[x, SHELF.height / 2, -SHELF.depth / 2 + 0.02]}>
           <boxGeometry args={[0.04, SHELF.height, 0.04]} />
           <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
         </mesh>
       ))}
+
+      {/* PAREDE DE COMPENSADO (fundo - as máquinas atravessam) */}
+      <mesh position={[0, feetHeight + (numLevels * levelHeight) / 2, plywoodZ]}>
+        <boxGeometry args={[SHELF.length, numLevels * levelHeight, plywoodThickness]} />
+        <meshStandardMaterial color="#a0865a" metalness={0.1} roughness={0.8} />
+      </mesh>
 
       {/* Prateleiras e ASICs */}
       {Array.from({ length: numLevels }).map((_, level) => {
@@ -184,13 +198,13 @@ function SimpleShelf({
               <boxGeometry args={[SHELF.length, 0.003, SHELF.depth]} />
               <meshStandardMaterial color={COLORS.shelf} metalness={0.5} roughness={0.5} />
             </mesh>
-            {/* ASICs */}
+            {/* ASICs - VAZANDO pelo compensado (30% para fora) */}
             {Array.from({ length: machinesPerLevel }).map((_, m) => {
               const machineX = startX + m * (ASIC.width + gap)
               return (
                 <SimpleASIC
                   key={`asic-${level}-${m}`}
-                  position={[machineX, levelY + ASIC.height / 2 + 0.003, SHELF.depth * 0.2]}
+                  position={[machineX, levelY + ASIC.height / 2 + 0.003, asicZ]}
                 />
               )
             })}
@@ -370,11 +384,8 @@ export default function AmbienteCompleto3D() {
         size={[ROOM.width / 2 - SHELF.length, ROOM.height, ROOM.wallThickness]}
       />
 
-      {/* ========== PAREDES DO FUNDO (atrás das estantes - lado quente externo) ========== */}
-      <GalvanizedWall
-        position={[0, ROOM.height / 2, ROOM.depth / 2]}
-        size={[ROOM.width, ROOM.height, ROOM.wallThickness]}
-      />
+      {/* ========== LADO QUENTE (atrás das estantes) - ABERTO para ar sair ========== */}
+      {/* Sem parede no fundo - ar quente sai livremente */}
 
       {/* ========== SETAS DE FLUXO DE AR ========== */}
       {/* Ar frio entrando pela frente (verde) */}
