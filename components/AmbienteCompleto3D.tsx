@@ -592,14 +592,55 @@ export default function AmbienteCompleto3D() {
               const boxHeight = COLD_AISLE.height // Mesma altura
               const boxWidth = COLD_AISLE.width + 0.4 // Um pouco mais larga
               const boxZ = colmeiaZ + boxDepth / 2 + 0.1 // Posição Z da caixa
+              const doorWidth = 0.9 // Largura da porta
+              const doorHeight = 2.1 // Altura da porta
               
               return (
                 <group>
-                  {/* PAREDE TRASEIRA (fundo da caixa) */}
+                  {/* PAREDE TRASEIRA (fundo da caixa) - COM ABERTURA PARA PORTA */}
+                  {/* Lado esquerdo da porta */}
                   <GalvanizedWall
-                    position={[0, boxHeight / 2, colmeiaZ + boxDepth]}
-                    size={[boxWidth, boxHeight, ROOM.wallThickness]}
+                    position={[-(boxWidth / 4 + doorWidth / 4), boxHeight / 2, colmeiaZ + boxDepth]}
+                    size={[boxWidth / 2 - doorWidth / 2, boxHeight, ROOM.wallThickness]}
                   />
+                  {/* Lado direito da porta */}
+                  <GalvanizedWall
+                    position={[(boxWidth / 4 + doorWidth / 4), boxHeight / 2, colmeiaZ + boxDepth]}
+                    size={[boxWidth / 2 - doorWidth / 2, boxHeight, ROOM.wallThickness]}
+                  />
+                  {/* Em cima da porta */}
+                  <GalvanizedWall
+                    position={[0, doorHeight + (boxHeight - doorHeight) / 2, colmeiaZ + boxDepth]}
+                    size={[doorWidth + 0.1, boxHeight - doorHeight, ROOM.wallThickness]}
+                  />
+                  
+                  {/* PORTA DA CAIXA ACÚSTICA (acesso externo para limpeza) */}
+                  <group position={[0, 0, colmeiaZ + boxDepth + 0.05]}>
+                    {/* Moldura */}
+                    <mesh position={[0, doorHeight / 2, 0]}>
+                      <boxGeometry args={[doorWidth + 0.1, doorHeight + 0.1, 0.08]} />
+                      <meshStandardMaterial color="#4a5568" metalness={0.6} roughness={0.4} />
+                    </mesh>
+                    {/* Porta */}
+                    <mesh position={[0, doorHeight / 2, 0.02]}>
+                      <boxGeometry args={[doorWidth, doorHeight, 0.05]} />
+                      <meshStandardMaterial color="#6b7280" metalness={0.7} roughness={0.3} />
+                    </mesh>
+                    {/* Maçaneta */}
+                    <mesh position={[doorWidth / 2 - 0.15, doorHeight / 2, 0.05]}>
+                      <boxGeometry args={[0.1, 0.03, 0.05]} />
+                      <meshStandardMaterial color="#1a1a1a" metalness={0.8} />
+                    </mesh>
+                    {/* Label */}
+                    <Text
+                      position={[0, doorHeight + 0.15, 0]}
+                      fontSize={0.08}
+                      color="#fbbf24"
+                      anchorX="center"
+                    >
+                      🚪 ACESSO LIMPEZA/MANUTENÇÃO
+                    </Text>
+                  </group>
                   
                   {/* PAREDE LATERAL ESQUERDA */}
                   <GalvanizedWall
@@ -630,6 +671,48 @@ export default function AmbienteCompleto3D() {
                   >
                     🔇 CAIXA ACÚSTICA (SEM TELHADO)
                   </Text>
+                </group>
+              )
+            })()}
+            
+            {/* ========== PORTA DE ACESSO AO COLD AISLE (lateral) ========== */}
+            {(() => {
+              const doorWidth = 0.9
+              const doorHeight = 2.1
+              const doorZ = coldAisleZ // No meio do cold aisle
+              
+              return (
+                <group>
+                  {/* Abertura na parede lateral direita do cold aisle */}
+                  {/* A parede lateral direita precisa ter uma abertura para a porta */}
+                  
+                  {/* PORTA DO COLD AISLE (acesso interno) */}
+                  <group position={[COLD_AISLE.width / 2 + 0.05, 0, doorZ]} rotation={[0, Math.PI / 2, 0]}>
+                    {/* Moldura */}
+                    <mesh position={[0, doorHeight / 2, 0]}>
+                      <boxGeometry args={[doorWidth + 0.1, doorHeight + 0.1, 0.08]} />
+                      <meshStandardMaterial color="#4a5568" metalness={0.6} roughness={0.4} />
+                    </mesh>
+                    {/* Porta */}
+                    <mesh position={[0, doorHeight / 2, 0.02]}>
+                      <boxGeometry args={[doorWidth, doorHeight, 0.05]} />
+                      <meshStandardMaterial color="#22c55e" metalness={0.5} roughness={0.4} />
+                    </mesh>
+                    {/* Maçaneta */}
+                    <mesh position={[doorWidth / 2 - 0.15, doorHeight / 2, 0.05]}>
+                      <boxGeometry args={[0.1, 0.03, 0.05]} />
+                      <meshStandardMaterial color="#1a1a1a" metalness={0.8} />
+                    </mesh>
+                    {/* Label */}
+                    <Text
+                      position={[0, doorHeight + 0.15, 0]}
+                      fontSize={0.08}
+                      color="#22c55e"
+                      anchorX="center"
+                    >
+                      🚪 ACESSO COLD AISLE
+                    </Text>
+                  </group>
                 </group>
               )
             })()}
