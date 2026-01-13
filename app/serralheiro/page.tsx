@@ -65,7 +65,7 @@ export default function SerralheiroPage() {
             <ul className="spec-list">
               <li><strong>Espessura:</strong> 18mm</li>
               <li><strong>Largura:</strong> ~2,92 m</li>
-              <li><strong>Altura:</strong> ~1,75 m</li>
+              <li><strong>Altura:</strong> 2,40 m (total)</li>
               <li><strong>Aberturas:</strong> Fazer no local</li>
             </ul>
           </div>
