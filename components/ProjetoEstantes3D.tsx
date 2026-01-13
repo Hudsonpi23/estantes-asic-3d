@@ -518,14 +518,14 @@ function Shelf({
               )
             })}
 
-            {/* Tomadas - embaixo da travessa de cada prateleira */}
+            {/* Tomadas - EM CIMA da prateleira */}
             {Array.from({ length: machinesPerLevel }).map((_, m) => {
               const machineX = startX + m * (PARAMS.asicW + machineGap)
-              const outletY = levelY - PARAMS.beamSize / 2 - PARAMS.outletBoxH / 2 - 0.01
+              const outletY = levelY + PARAMS.outletBoxH / 2 + 0.01
               return (
                 <OutletBox
                   key={`outlet-${level}-${m}`}
-                  position={[machineX, outletY, frontZ - PARAMS.outletBoxD / 2 - 0.01]}
+                  position={[machineX, outletY, frontZ - PARAMS.outletBoxD / 2 - 0.02]}
                 />
               )
             })}
