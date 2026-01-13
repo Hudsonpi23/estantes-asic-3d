@@ -2,6 +2,7 @@
 
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Grid, Text } from '@react-three/drei'
+import * as THREE from 'three'
 
 // ============================================================
 // PARÂMETROS
@@ -109,7 +110,50 @@ function ASIC3D({ position }: { position: [number, number, number] }) {
 }
 
 // ============================================================
-// COMPONENTE: Estante com ASICs
+// COMPONENTE: Compensado com Aberturas (cutouts para máquinas vazarem)
+// ============================================================
+function PlywoodWithCutouts({
+  position,
+  width,
+  height,
+  cutouts,
+}: {
+  position: [number, number, number]
+  width: number
+  height: number
+  cutouts: Array<{ x: number; y: number; w: number; h: number }>
+}) {
+  const shape = new THREE.Shape()
+  shape.moveTo(-width / 2, -height / 2)
+  shape.lineTo(width / 2, -height / 2)
+  shape.lineTo(width / 2, height / 2)
+  shape.lineTo(-width / 2, height / 2)
+  shape.closePath()
+
+  // Adiciona as aberturas
+  cutouts.forEach(({ x, y, w, h }) => {
+    const hole = new THREE.Path()
+    const margin = 0.005 // 5mm de folga
+    hole.moveTo(x - w / 2 - margin, y - h / 2 - margin)
+    hole.lineTo(x + w / 2 + margin, y - h / 2 - margin)
+    hole.lineTo(x + w / 2 + margin, y + h / 2 + margin)
+    hole.lineTo(x - w / 2 - margin, y + h / 2 + margin)
+    hole.closePath()
+    shape.holes.push(hole)
+  })
+
+  const extrudeSettings = { depth: 0.018, bevelEnabled: false }
+
+  return (
+    <mesh position={position} rotation={[0, 0, 0]}>
+      <extrudeGeometry args={[shape, extrudeSettings]} />
+      <meshStandardMaterial color={COLORS.plywood} roughness={0.8} />
+    </mesh>
+  )
+}
+
+// ============================================================
+// COMPONENTE: Estante com ASICs VAZANDO pelo compensado
 // ============================================================
 function Estante({ position }: { position: [number, number, number] }) {
   const feetHeight = 0.6
@@ -119,6 +163,29 @@ function Estante({ position }: { position: [number, number, number] }) {
   const gap = 0.05
   const totalWidth = machinesPerLevel * ASIC.width + (machinesPerLevel - 1) * gap
   const startX = -totalWidth / 2 + ASIC.width / 2
+  
+  // Protrusion: 30% da máquina vaza para fora (lado quente)
+  const protrusion = ASIC.depth * 0.30 // ~12cm
+  const plywoodZ = SHELF.depth / 2 // Posição do compensado
+  // ASIC posicionada para vazar pelo compensado
+  const asicCenterZ = plywoodZ + protrusion - ASIC.depth / 2
+
+  // Gerar cutouts para cada máquina
+  const cutouts: Array<{ x: number; y: number; w: number; h: number }> = []
+  for (let level = 0; level < numLevels; level++) {
+    const levelY = feetHeight + level * levelHeight
+    // Y relativo ao centro do compensado
+    const panelY = levelY - SHELF.height / 2 + ASIC.height / 2 + 0.01
+    for (let m = 0; m < machinesPerLevel; m++) {
+      const machineX = startX + m * (ASIC.width + gap)
+      cutouts.push({
+        x: machineX,
+        y: panelY,
+        w: ASIC.width,
+        h: ASIC.height,
+      })
+    }
+  }
 
   return (
     <group position={position}>
@@ -130,13 +197,15 @@ function Estante({ position }: { position: [number, number, number] }) {
         </mesh>
       ))}
       
-      {/* Compensado de fundo */}
-      <mesh position={[0, SHELF.height/2, SHELF.depth/2]}>
-        <boxGeometry args={[SHELF.length, SHELF.height, 0.018]} />
-        <meshStandardMaterial color={COLORS.plywood} />
-      </mesh>
+      {/* COMPENSADO COM ABERTURAS (máquinas vazam por aqui) */}
+      <PlywoodWithCutouts
+        position={[0, SHELF.height / 2, plywoodZ - 0.009]}
+        width={SHELF.length - 0.08}
+        height={SHELF.height}
+        cutouts={cutouts}
+      />
 
-      {/* Níveis com ASICs */}
+      {/* Níveis com ASICs - VAZANDO pelo compensado */}
       {Array.from({ length: numLevels }).map((_, level) => {
         const y = feetHeight + level * levelHeight
         return (
@@ -146,16 +215,24 @@ function Estante({ position }: { position: [number, number, number] }) {
               <boxGeometry args={[SHELF.length, 0.003, SHELF.depth/2]} />
               <meshStandardMaterial color={COLORS.metal} metalness={0.5} />
             </mesh>
-            {/* ASICs */}
+            {/* ASICs - 30% VAZANDO para fora do compensado */}
             {Array.from({ length: machinesPerLevel }).map((_, m) => (
               <ASIC3D
                 key={m}
-                position={[startX + m * (ASIC.width + gap), y + ASIC.height/2 + 0.01, 0]}
+                position={[startX + m * (ASIC.width + gap), y + ASIC.height/2 + 0.01, asicCenterZ]}
               />
             ))}
           </group>
         )
       })}
+      
+      {/* Pés */}
+      {[-SHELF.length/2 + 0.05, SHELF.length/2 - 0.05].map((x, i) => (
+        <mesh key={`foot-${i}`} position={[x, feetHeight / 2, 0]}>
+          <boxGeometry args={[0.05, feetHeight, 0.05]} />
+          <meshStandardMaterial color={COLORS.metal} metalness={0.6} />
+        </mesh>
+      ))}
     </group>
   )
 }
