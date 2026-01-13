@@ -14,15 +14,16 @@ const ROOM = {
   wallThickness: 0.1,  // Espessura das paredes
   doorWidth: 1.0,      // Largura da porta
   doorHeight: 2.2,     // Altura da porta
-  ventHeight: 1.0,     // Altura das aberturas laterais
-  ventFromFloor: 1.5,  // Distância do chão até as aberturas
+  ventHeight: 0.8,     // Altura das aberturas laterais
+  ventFromCeiling: 0.3, // Distância do TETO até as aberturas (perto do teto)
+  topVentHeight: 0.5,  // Altura da abertura em cima da porta
 }
 
 const SHELF = {
   length: 3.0,
   height: 2.4,
   depth: 0.6,
-  spacing: 0.8,
+  spacing: 0.0,  // Estantes JUNTAS (coladas)
 }
 
 const ASIC = {
@@ -272,91 +273,97 @@ export default function AmbienteCompleto3D() {
         size={[ROOM.width, ROOM.wallThickness, ROOM.depth]}
       />
 
-      {/* ========== PAREDE FRONTAL (com porta) ========== */}
-      {/* Lado esquerdo da porta */}
-      <GalvanizedWall
-        position={[
-          -ROOM.width / 4 - ROOM.doorWidth / 4,
-          ROOM.height / 2,
-          -ROOM.depth / 2
-        ]}
-        size={[ROOM.width / 2 - ROOM.doorWidth / 2, ROOM.height, ROOM.wallThickness]}
-      />
-      {/* Lado direito da porta */}
-      <GalvanizedWall
-        position={[
-          ROOM.width / 4 + ROOM.doorWidth / 4,
-          ROOM.height / 2,
-          -ROOM.depth / 2
-        ]}
-        size={[ROOM.width / 2 - ROOM.doorWidth / 2, ROOM.height, ROOM.wallThickness]}
-      />
-      {/* Em cima da porta */}
-      <GalvanizedWall
-        position={[0, ROOM.height - (ROOM.height - ROOM.doorHeight) / 2, -ROOM.depth / 2]}
-        size={[ROOM.doorWidth + 0.2, ROOM.height - ROOM.doorHeight, ROOM.wallThickness]}
-      />
+      {/* ========== PAREDE FRONTAL (com porta e abertura em cima) ========== */}
+      {(() => {
+        const topVentStartY = ROOM.height - ROOM.ventFromCeiling - ROOM.topVentHeight
+        const sideWallHeight = topVentStartY  // Altura das paredes laterais (até a abertura)
+        return (
+          <>
+            {/* Lado esquerdo da porta (até altura da abertura) */}
+            <GalvanizedWall
+              position={[
+                -ROOM.width / 4 - ROOM.doorWidth / 4,
+                sideWallHeight / 2,
+                -ROOM.depth / 2
+              ]}
+              size={[ROOM.width / 2 - ROOM.doorWidth / 2, sideWallHeight, ROOM.wallThickness]}
+            />
+            {/* Lado direito da porta (até altura da abertura) */}
+            <GalvanizedWall
+              position={[
+                ROOM.width / 4 + ROOM.doorWidth / 4,
+                sideWallHeight / 2,
+                -ROOM.depth / 2
+              ]}
+              size={[ROOM.width / 2 - ROOM.doorWidth / 2, sideWallHeight, ROOM.wallThickness]}
+            />
+            {/* Faixa bem no topo (acima da abertura) */}
+            <GalvanizedWall
+              position={[0, ROOM.height - ROOM.ventFromCeiling / 2, -ROOM.depth / 2]}
+              size={[ROOM.width, ROOM.ventFromCeiling, ROOM.wallThickness]}
+            />
+            {/* Em cima da porta (entre porta e abertura) */}
+            <GalvanizedWall
+              position={[0, ROOM.doorHeight + (topVentStartY - ROOM.doorHeight) / 2, -ROOM.depth / 2]}
+              size={[ROOM.doorWidth + 0.2, topVentStartY - ROOM.doorHeight, ROOM.wallThickness]}
+            />
+          </>
+        )
+      })()}
       {/* Porta */}
       <Door position={[0, 0, -ROOM.depth / 2 + 0.1]} />
 
-      {/* ========== PAREDE TRASEIRA (tijolo) ========== */}
-      <BrickWall
-        position={[0, ROOM.height / 2, ROOM.depth / 2]}
-        size={[ROOM.width, ROOM.height, ROOM.wallThickness]}
-      />
+      {/* ========== PAREDES LATERAIS (com aberturas PERTO DO TETO) ========== */}
+      {/* Altura da parte sólida inferior (até onde começa a abertura) */}
+      {(() => {
+        const ventStartY = ROOM.height - ROOM.ventFromCeiling - ROOM.ventHeight
+        const solidBottomHeight = ventStartY
+        return (
+          <>
+            {/* Lateral Esquerda - Parte inferior (sólida) */}
+            <GalvanizedWall
+              position={[-ROOM.width / 2, solidBottomHeight / 2, 0]}
+              size={[ROOM.wallThickness, solidBottomHeight, ROOM.depth]}
+            />
+            {/* Lateral Esquerda - Parte superior (acima da abertura) */}
+            <GalvanizedWall
+              position={[-ROOM.width / 2, ROOM.height - ROOM.ventFromCeiling / 2, 0]}
+              size={[ROOM.wallThickness, ROOM.ventFromCeiling, ROOM.depth]}
+            />
 
-      {/* ========== PAREDES LATERAIS (com aberturas) ========== */}
-      {/* Lateral Esquerda - Parte inferior */}
-      <GalvanizedWall
-        position={[-ROOM.width / 2, ROOM.ventFromFloor / 2, 0]}
-        size={[ROOM.wallThickness, ROOM.ventFromFloor, ROOM.depth]}
-      />
-      {/* Lateral Esquerda - Parte superior */}
-      <GalvanizedWall
-        position={[
-          -ROOM.width / 2,
-          ROOM.ventFromFloor + ROOM.ventHeight + (ROOM.height - ROOM.ventFromFloor - ROOM.ventHeight) / 2,
-          0
-        ]}
-        size={[ROOM.wallThickness, ROOM.height - ROOM.ventFromFloor - ROOM.ventHeight, ROOM.depth]}
-      />
+            {/* Lateral Direita - Parte inferior (sólida) */}
+            <GalvanizedWall
+              position={[ROOM.width / 2, solidBottomHeight / 2, 0]}
+              size={[ROOM.wallThickness, solidBottomHeight, ROOM.depth]}
+            />
+            {/* Lateral Direita - Parte superior (acima da abertura) */}
+            <GalvanizedWall
+              position={[ROOM.width / 2, ROOM.height - ROOM.ventFromCeiling / 2, 0]}
+              size={[ROOM.wallThickness, ROOM.ventFromCeiling, ROOM.depth]}
+            />
+          </>
+        )
+      })()}
 
-      {/* Lateral Direita - Parte inferior */}
-      <GalvanizedWall
-        position={[ROOM.width / 2, ROOM.ventFromFloor / 2, 0]}
-        size={[ROOM.wallThickness, ROOM.ventFromFloor, ROOM.depth]}
-      />
-      {/* Lateral Direita - Parte superior */}
-      <GalvanizedWall
-        position={[
-          ROOM.width / 2,
-          ROOM.ventFromFloor + ROOM.ventHeight + (ROOM.height - ROOM.ventFromFloor - ROOM.ventHeight) / 2,
-          0
-        ]}
-        size={[ROOM.wallThickness, ROOM.height - ROOM.ventFromFloor - ROOM.ventHeight, ROOM.depth]}
-      />
-
-      {/* ========== DIVISÓRIA ENTRE HOT/COLD (parede baixa) ========== */}
-      <GalvanizedWall
-        position={[0, 0.8, SHELF.depth / 2 + 0.5]}
-        size={[ROOM.width - 0.4, 1.6, 0.05]}
-      />
-
-      {/* ========== ESTANTES ========== */}
-      <SimpleShelf position={[-shelfOffset, 0, 0]} />
-      <SimpleShelf position={[shelfOffset, 0, 0]} />
+      {/* ========== ESTANTES NO FUNDO (substituem a parede de tijolo) ========== */}
+      {/* Estantes juntas/coladas formando uma "parede" com compensado */}
+      <SimpleShelf position={[-SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
+      <SimpleShelf position={[SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
 
       {/* ========== SETAS DE FLUXO DE AR ========== */}
-      {/* Ar frio entrando (verde) */}
-      <AirflowArrow start={[0, 1.5, -ROOM.depth / 2 + 0.5]} end={[0, 1.5, 0]} color={COLORS.coldAir} />
+      {/* Ar frio entrando pela frente (verde) */}
+      <AirflowArrow start={[0, 1.5, -ROOM.depth / 2 - 0.5]} end={[0, 1.5, 0]} color={COLORS.coldAir} />
       
-      {/* Ar quente saindo pelas laterais (vermelho) */}
-      <AirflowArrow start={[1, 2, 0.5]} end={[ROOM.width / 2 + 0.5, 2, 0.5]} color={COLORS.hotAir} />
-      <AirflowArrow start={[-1, 2, 0.5]} end={[-ROOM.width / 2 - 0.5, 2, 0.5]} color={COLORS.hotAir} />
+      {/* Ar quente saindo pelas laterais (perto do teto) */}
+      <AirflowArrow start={[1, ROOM.height - 0.8, ROOM.depth / 4]} end={[ROOM.width / 2 + 0.5, ROOM.height - 0.8, ROOM.depth / 4]} color={COLORS.hotAir} />
+      <AirflowArrow start={[-1, ROOM.height - 0.8, ROOM.depth / 4]} end={[-ROOM.width / 2 - 0.5, ROOM.height - 0.8, ROOM.depth / 4]} color={COLORS.hotAir} />
+      
+      {/* Ar quente saindo em cima da porta */}
+      <AirflowArrow start={[0, ROOM.height - 0.6, 0]} end={[0, ROOM.height - 0.6, -ROOM.depth / 2 - 0.5]} color={COLORS.hotAir} />
 
       {/* ========== LABELS ========== */}
       <Text
-        position={[0, 0.3, -ROOM.depth / 2 + 0.3]}
+        position={[0, 0.3, -ROOM.depth / 2 - 0.3]}
         fontSize={0.15}
         color={COLORS.coldAir}
         anchorX="center"
@@ -364,7 +371,7 @@ export default function AmbienteCompleto3D() {
         🟢 LADO FRIO (Entrada)
       </Text>
       <Text
-        position={[-ROOM.width / 2 - 0.3, 2, 0]}
+        position={[-ROOM.width / 2 - 0.3, ROOM.height - 0.8, 0]}
         fontSize={0.12}
         color={COLORS.hotAir}
         anchorX="center"
@@ -373,13 +380,21 @@ export default function AmbienteCompleto3D() {
         🔴 SAÍDA AR QUENTE
       </Text>
       <Text
-        position={[ROOM.width / 2 + 0.3, 2, 0]}
+        position={[ROOM.width / 2 + 0.3, ROOM.height - 0.8, 0]}
         fontSize={0.12}
         color={COLORS.hotAir}
         anchorX="center"
         rotation={[0, -Math.PI / 2, 0]}
       >
         🔴 SAÍDA AR QUENTE
+      </Text>
+      <Text
+        position={[0, ROOM.height - 0.3, -ROOM.depth / 2 - 0.3]}
+        fontSize={0.1}
+        color={COLORS.hotAir}
+        anchorX="center"
+      >
+        🔴 SAÍDA (cima porta)
       </Text>
 
       {/* Grid do chão externo */}
