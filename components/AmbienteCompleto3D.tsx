@@ -367,8 +367,21 @@ export default function AmbienteCompleto3D() {
       <SimpleShelf position={[SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
 
       {/* ========== CHAPA EMBAIXO DAS ESTANTES (tampa os pés - não vaza ar frio) ========== */}
+      {/* Chapa principal - cobre toda a largura da sala */}
       <mesh position={[0, 0.02, ROOM.depth / 2 - SHELF.depth / 2]}>
-        <boxGeometry args={[SHELF.length * 2 + 0.1, 0.05, SHELF.depth + 0.1]} />
+        <boxGeometry args={[ROOM.width, 0.05, SHELF.depth + 0.2]} />
+        <meshStandardMaterial color={COLORS.galvanized} metalness={0.6} roughness={0.4} />
+      </mesh>
+      
+      {/* Chapas laterais - fecham os cantos até as paredes */}
+      {/* Lado esquerdo */}
+      <mesh position={[-ROOM.width / 2 + (ROOM.width / 2 - SHELF.length) / 2, SHELF.height / 4, ROOM.depth / 2 - SHELF.depth / 2]}>
+        <boxGeometry args={[ROOM.width / 2 - SHELF.length + 0.1, SHELF.height / 2, SHELF.depth + 0.2]} />
+        <meshStandardMaterial color={COLORS.galvanized} metalness={0.6} roughness={0.4} />
+      </mesh>
+      {/* Lado direito */}
+      <mesh position={[ROOM.width / 2 - (ROOM.width / 2 - SHELF.length) / 2, SHELF.height / 4, ROOM.depth / 2 - SHELF.depth / 2]}>
+        <boxGeometry args={[ROOM.width / 2 - SHELF.length + 0.1, SHELF.height / 2, SHELF.depth + 0.2]} />
         <meshStandardMaterial color={COLORS.galvanized} metalness={0.6} roughness={0.4} />
       </mesh>
 
