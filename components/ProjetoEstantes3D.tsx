@@ -533,11 +533,11 @@ function Shelf({
         )
       })}
 
-      {/* PAREDE DE COMPENSADO com aberturas para as máquinas */}
+      {/* PAREDE DE COMPENSADO com aberturas - VAI ATÉ O CHÃO */}
       <PlywoodWall
-        position={[0, feetHeight + (numLevels * levelHeight) / 2, rearZ - 0.009]}
+        position={[0, (feetHeight + numLevels * levelHeight) / 2, rearZ - 0.009]}
         width={shelfLength - PARAMS.beamSize * 2}
-        height={numLevels * levelHeight}
+        height={feetHeight + numLevels * levelHeight}
         cutouts={cutouts}
       />
 
