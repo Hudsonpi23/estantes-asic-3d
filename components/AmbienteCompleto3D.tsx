@@ -366,6 +366,12 @@ export default function AmbienteCompleto3D() {
       <SimpleShelf position={[-SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
       <SimpleShelf position={[SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
 
+      {/* ========== CHAPA EMBAIXO DAS ESTANTES (tampa os pés - não vaza ar frio) ========== */}
+      <mesh position={[0, 0.02, ROOM.depth / 2 - SHELF.depth / 2]}>
+        <boxGeometry args={[SHELF.length * 2 + 0.1, 0.05, SHELF.depth + 0.1]} />
+        <meshStandardMaterial color={COLORS.galvanized} metalness={0.6} roughness={0.4} />
+      </mesh>
+
       {/* ========== PAREDES LATERAIS TRASEIRAS (fecham os lados atrás das estantes) ========== */}
       {/* Lado esquerdo - parede entre lateral e estante */}
       <GalvanizedWall
