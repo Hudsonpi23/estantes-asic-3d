@@ -389,11 +389,14 @@ function Shelf({
     [0, totalHeight / 2, rearZ - PARAMS.beamSize / 2],   // Meio fundo
   ]
 
-  // Recortes para o painel traseiro
+  // Recortes para o painel traseiro (apenas na área das máquinas, NÃO nos 60cm de baixo)
+  // O compensado vai até o chão, mas os recortes só existem onde há máquinas
+  const panelTotalHeight = feetHeight + numLevels * levelHeight
   const cutouts: Array<{ x: number; y: number; w: number; h: number }> = []
   for (let level = 0; level < numLevels; level++) {
     const levelY = feetHeight + level * levelHeight + PARAMS.asicH / 2
-    const panelY = levelY - (feetHeight + (numLevels * levelHeight) / 2)
+    // Posição Y relativa ao CENTRO do painel (que agora vai até o chão)
+    const panelY = levelY - (panelTotalHeight / 2)
     
     for (let m = 0; m < machinesPerLevel; m++) {
       const machineX = startX + m * (PARAMS.asicW + machineGap)
