@@ -281,13 +281,13 @@ export default function AmbienteCompleto3D() {
         <meshStandardMaterial color={COLORS.floor} roughness={0.9} />
       </mesh>
 
-      {/* ========== TETO (METADE - só lado frio) ========== */}
-      {/* Metade frontal do teto (cobre o lado frio) */}
+      {/* ========== TETO (METADE - cobre as MÁQUINAS no fundo) ========== */}
+      {/* Metade TRASEIRA do teto (cobre as estantes/máquinas) */}
       <GalvanizedWall
-        position={[0, ROOM.height, -ROOM.depth / 4]}
+        position={[0, ROOM.height, ROOM.depth / 4]}
         size={[ROOM.width, ROOM.wallThickness, ROOM.depth / 2]}
       />
-      {/* Metade traseira ABERTA (lado quente - ar sai por cima) */}
+      {/* Metade FRONTAL ABERTA (perto da porta - ar circula) */}
 
       {/* ========== PAREDE FRONTAL (com porta e abertura em cima) ========== */}
       {(() => {
