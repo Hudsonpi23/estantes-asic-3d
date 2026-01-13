@@ -24,6 +24,9 @@ export default function SerralheiroPage() {
             <Link href="/ambiente" className="nav-btn">
               🏭 Ambiente
             </Link>
+            <Link href="/cold-aisle" className="nav-btn">
+              🧊 Cold Aisle
+            </Link>
           </nav>
         </div>
         <p>Estrutura metálica para montagem • Compensado sem aberturas</p>

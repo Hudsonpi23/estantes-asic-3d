@@ -24,6 +24,9 @@ export default function AmbientePage() {
             <Link href="/ambiente" className="nav-btn active">
               🏭 Ambiente
             </Link>
+            <Link href="/cold-aisle" className="nav-btn">
+              🧊 Cold Aisle
+            </Link>
           </nav>
         </div>
         <p>Sala fechada com saída de ar lateral • Hot Aisle / Cold Aisle</p>
