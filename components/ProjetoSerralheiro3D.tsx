@@ -287,11 +287,11 @@ function ShelfStructure({
         )
       })}
 
-      {/* PAREDE DE COMPENSADO - SEM ABERTURAS */}
+      {/* PAREDE DE COMPENSADO - SEM ABERTURAS - VAI ATÉ O CHÃO */}
       <PlywoodWallSolid
-        position={[0, feetHeight + (numLevels * levelHeight) / 2, rearZ - 0.009]}
+        position={[0, (feetHeight + numLevels * levelHeight) / 2, rearZ - 0.009]}
         width={shelfLength - PARAMS.beamSize * 2}
-        height={numLevels * levelHeight}
+        height={feetHeight + numLevels * levelHeight}
       />
 
       {/* Labels de orientação */}
