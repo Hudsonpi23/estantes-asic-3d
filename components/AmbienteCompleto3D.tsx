@@ -182,9 +182,9 @@ function SimpleShelf({
         </mesh>
       ))}
 
-      {/* PAREDE DE COMPENSADO (fundo - as máquinas atravessam) */}
-      <mesh position={[0, feetHeight + (numLevels * levelHeight) / 2, plywoodZ]}>
-        <boxGeometry args={[SHELF.length, numLevels * levelHeight, plywoodThickness]} />
+      {/* PAREDE DE COMPENSADO (fundo - vai até o CHÃO, funciona como parede) */}
+      <mesh position={[0, SHELF.height / 2, plywoodZ]}>
+        <boxGeometry args={[SHELF.length, SHELF.height, plywoodThickness]} />
         <meshStandardMaterial color="#a0865a" metalness={0.1} roughness={0.8} />
       </mesh>
 
@@ -366,22 +366,9 @@ export default function AmbienteCompleto3D() {
       <SimpleShelf position={[-SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
       <SimpleShelf position={[SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
 
-      {/* ========== CHAPA EMBAIXO DAS ESTANTES (tampa os pés - não vaza ar frio) ========== */}
-      {/* Chapa principal - cobre toda a largura da sala */}
+      {/* ========== CHAPA NO PISO (apenas na frente das estantes) ========== */}
       <mesh position={[0, 0.02, ROOM.depth / 2 - SHELF.depth / 2]}>
         <boxGeometry args={[ROOM.width, 0.05, SHELF.depth + 0.2]} />
-        <meshStandardMaterial color={COLORS.galvanized} metalness={0.6} roughness={0.4} />
-      </mesh>
-      
-      {/* Chapas laterais - fecham os cantos até as paredes */}
-      {/* Lado esquerdo */}
-      <mesh position={[-ROOM.width / 2 + (ROOM.width / 2 - SHELF.length) / 2, SHELF.height / 4, ROOM.depth / 2 - SHELF.depth / 2]}>
-        <boxGeometry args={[ROOM.width / 2 - SHELF.length + 0.1, SHELF.height / 2, SHELF.depth + 0.2]} />
-        <meshStandardMaterial color={COLORS.galvanized} metalness={0.6} roughness={0.4} />
-      </mesh>
-      {/* Lado direito */}
-      <mesh position={[ROOM.width / 2 - (ROOM.width / 2 - SHELF.length) / 2, SHELF.height / 4, ROOM.depth / 2 - SHELF.depth / 2]}>
-        <boxGeometry args={[ROOM.width / 2 - SHELF.length + 0.1, SHELF.height / 2, SHELF.depth + 0.2]} />
         <meshStandardMaterial color={COLORS.galvanized} metalness={0.6} roughness={0.4} />
       </mesh>
 
