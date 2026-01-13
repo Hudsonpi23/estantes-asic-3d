@@ -10,13 +10,13 @@ import * as THREE from 'three'
 const ROOM = {
   width: 8.0,          // Largura da sala (X)
   depth: 4.0,          // Profundidade da sala (Z)
-  height: 3.5,         // Altura da sala (Y)
+  height: 2.4,         // Altura da sala = MESMA ALTURA DAS ESTANTES
   wallThickness: 0.1,  // Espessura das paredes
   doorWidth: 1.0,      // Largura da porta
-  doorHeight: 2.2,     // Altura da porta
-  ventHeight: 0.8,     // Altura das aberturas laterais
-  ventFromCeiling: 0.3, // Distância do TETO até as aberturas (perto do teto)
-  topVentHeight: 0.5,  // Altura da abertura em cima da porta
+  doorHeight: 2.1,     // Altura da porta (um pouco menor que as paredes)
+  ventHeight: 0.4,     // Altura das aberturas laterais (perto do teto)
+  ventFromCeiling: 0.1, // Distância do TETO até as aberturas
+  topVentHeight: 0.2,  // Altura da abertura em cima da porta
 }
 
 const SHELF = {
