@@ -484,13 +484,14 @@ export default function AmbienteCompleto3D() {
       <AirflowArrow start={[0, ROOM.height - 0.6, 0]} end={[0, ROOM.height - 0.6, -ROOM.depth / 2 - 0.5]} color={COLORS.hotAir} />
 
       {/* ================================================================ */}
-      {/* ========== COLD AISLE - NA FRENTE DAS MÁQUINAS (onde sugam ar) ========== */}
+      {/* ========== COLD AISLE - ATRÁS DAS MÁQUINAS (lado do compensado) ========== */}
       {/* ================================================================ */}
       {(() => {
-        // Cold aisle fica NA FRENTE das estantes (lado frio das máquinas)
-        const shelfFrontZ = ROOM.depth / 2 - SHELF.depth // Frente das estantes
-        const coldAisleZ = shelfFrontZ - COLD_AISLE.depth / 2 // Centro do cold aisle
-        const colmeiaZ = shelfFrontZ - COLD_AISLE.depth // Parede com colmeia (mais distante das máquinas)
+        // Cold aisle fica ATRÁS das estantes (onde o compensado está)
+        // O compensado é o lado FRIO - onde as máquinas SUGAM ar
+        const shelfBackZ = ROOM.depth / 2 // Fundo das estantes (compensado)
+        const coldAisleZ = shelfBackZ + COLD_AISLE.depth / 2 // Centro do cold aisle
+        const colmeiaZ = shelfBackZ + COLD_AISLE.depth // Parede com colmeia
         
         return (
           <group>
@@ -518,7 +519,7 @@ export default function AmbienteCompleto3D() {
               size={[ROOM.wallThickness, COLD_AISLE.height, COLD_AISLE.depth]}
             />
 
-            {/* PAREDE COM COLMEIA EVAPORATIVA (oposta às máquinas) */}
+            {/* PAREDE COM COLMEIA EVAPORATIVA (no final do cold aisle) */}
             <EvaporativePanel
               position={[0, COLD_AISLE.height / 2, colmeiaZ]}
               width={COLD_AISLE.width - 0.4}
@@ -547,20 +548,20 @@ export default function AmbienteCompleto3D() {
               size={[0.2, COLD_AISLE.height, ROOM.wallThickness]}
             />
 
-            {/* SETAS - Ar frio da colmeia → máquinas → hot aisle */}
+            {/* SETAS - Ar frio da colmeia → máquinas */}
             <AirflowArrow 
-              start={[0, 1.2, colmeiaZ + 0.3]} 
-              end={[0, 1.2, shelfFrontZ - 0.1]} 
+              start={[0, 1.2, colmeiaZ - 0.3]} 
+              end={[0, 1.2, shelfBackZ + 0.1]} 
               color={COLORS.coldAir} 
             />
             <AirflowArrow 
-              start={[-1.5, 1.2, colmeiaZ + 0.3]} 
-              end={[-1.5, 1.2, shelfFrontZ - 0.1]} 
+              start={[-1.5, 1.2, colmeiaZ - 0.3]} 
+              end={[-1.5, 1.2, shelfBackZ + 0.1]} 
               color={COLORS.coldAir} 
             />
             <AirflowArrow 
-              start={[1.5, 1.2, colmeiaZ + 0.3]} 
-              end={[1.5, 1.2, shelfFrontZ - 0.1]} 
+              start={[1.5, 1.2, colmeiaZ - 0.3]} 
+              end={[1.5, 1.2, shelfBackZ + 0.1]} 
               color={COLORS.coldAir} 
             />
 
@@ -576,7 +577,7 @@ export default function AmbienteCompleto3D() {
             
             {/* Label da colmeia */}
             <Text
-              position={[0, 0.3, colmeiaZ - 0.3]}
+              position={[0, 0.3, colmeiaZ + 0.3]}
               fontSize={0.15}
               color={COLORS.coldAir}
               anchorX="center"
