@@ -42,33 +42,43 @@ const COLORS = {
 
 // ============================================================
 // COMPONENTE: Colmeia Evaporativa
+// A colmeia começa a 60cm do chão (altura dos pés das estantes)
 // ============================================================
 function Colmeia({ position }: { position: [number, number, number] }) {
   const width = COLD_AISLE.width - 0.4
-  const height = COLD_AISLE.height - 0.3
+  const feetHeight = 0.6 // 60cm do chão - alinhado com os pés das estantes
+  const colmeiaHeight = COLD_AISLE.height - feetHeight - 0.1 // Altura útil da colmeia (1.7m)
   
   return (
     <group position={position}>
-      {/* Moldura */}
-      <mesh position={[0, 0, -0.08]}>
-        <boxGeometry args={[width + 0.16, height + 0.16, 0.05]} />
+      {/* Parede sólida embaixo da colmeia (0 a 60cm) */}
+      <mesh position={[0, -colmeiaHeight/2 - feetHeight/2 + 0.05, -0.05]}>
+        <boxGeometry args={[width + 0.16, feetHeight, 0.1]} />
         <meshStandardMaterial color={COLORS.honeycombFrame} />
       </mesh>
-      {/* Painel */}
+      
+      {/* Moldura da colmeia */}
+      <mesh position={[0, 0, -0.08]}>
+        <boxGeometry args={[width + 0.16, colmeiaHeight + 0.16, 0.05]} />
+        <meshStandardMaterial color={COLORS.honeycombFrame} />
+      </mesh>
+      
+      {/* Painel da colmeia */}
       <mesh>
-        <boxGeometry args={[width, height, 0.15]} />
+        <boxGeometry args={[width, colmeiaHeight, 0.15]} />
         <meshStandardMaterial color={COLORS.honeycomb} transparent opacity={0.9} />
       </mesh>
+      
       {/* Linhas verticais */}
-      {Array.from({ length: 60 }).map((_, i) => (
+      {Array.from({ length: 56 }).map((_, i) => (
         <mesh key={`v-${i}`} position={[-width/2 + 0.05 + i * 0.1, 0, 0.08]}>
-          <boxGeometry args={[0.003, height, 0.002]} />
+          <boxGeometry args={[0.003, colmeiaHeight, 0.002]} />
           <meshStandardMaterial color="#5a4a14" />
         </mesh>
       ))}
       {/* Linhas horizontais */}
-      {Array.from({ length: 24 }).map((_, i) => (
-        <mesh key={`h-${i}`} position={[0, -height/2 + 0.05 + i * 0.1, 0.08]}>
+      {Array.from({ length: 17 }).map((_, i) => (
+        <mesh key={`h-${i}`} position={[0, -colmeiaHeight/2 + 0.05 + i * 0.1, 0.08]}>
           <boxGeometry args={[width, 0.003, 0.002]} />
           <meshStandardMaterial color="#5a4a14" />
         </mesh>
@@ -188,8 +198,8 @@ export default function ColdAisleInterno3D() {
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
 
-      {/* COLMEIA (Z = 0) */}
-      <Colmeia position={[0, COLD_AISLE.height/2, 0.1]} />
+      {/* COLMEIA (Z = 0) - começa a 60cm do chão */}
+      <Colmeia position={[0, 0.6 + (COLD_AISLE.height - 0.6 - 0.1)/2, 0.1]} />
 
       {/* ESTANTES (Z = depth) */}
       <Estante position={[-SHELF.length/2, 0, COLD_AISLE.depth - 0.3]} />
