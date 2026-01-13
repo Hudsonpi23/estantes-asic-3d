@@ -69,6 +69,9 @@ const COLORS = {
 interface ProjetoEstantes3DProps {
   numLevels?: number
   machinesPerLevel?: number
+  shelfDepth?: number      // Profundidade da estante (m)
+  conduitDia?: number      // Diâmetro do conduíte (m)
+  gap?: number             // Espaçamento entre máquinas (m)
 }
 
 // ============================================================
@@ -233,13 +236,15 @@ function ASIC({ position }: { position: [number, number, number] }) {
 function Conduit({
   position,
   length,
+  diameter = PARAMS.conduitDia,
 }: {
   position: [number, number, number]
   length: number
+  diameter?: number
 }) {
   return (
     <mesh position={position} rotation={[0, 0, Math.PI / 2]}>
-      <cylinderGeometry args={[PARAMS.conduitDia / 2, PARAMS.conduitDia / 2, length, 16]} />
+      <cylinderGeometry args={[diameter / 2, diameter / 2, length, 16]} />
       <meshStandardMaterial color={COLORS.conduit} metalness={0.2} roughness={0.6} />
     </mesh>
   )
@@ -248,10 +253,16 @@ function Conduit({
 // ============================================================
 // COMPONENTE: Abraçadeira
 // ============================================================
-function Clamp({ position }: { position: [number, number, number] }) {
+function Clamp({ 
+  position, 
+  diameter = PARAMS.conduitDia 
+}: { 
+  position: [number, number, number]
+  diameter?: number 
+}) {
   return (
     <mesh position={position} rotation={[0, 0, Math.PI / 2]}>
-      <torusGeometry args={[PARAMS.conduitDia / 2 + 0.005, 0.004, 8, 24]} />
+      <torusGeometry args={[diameter / 2 + 0.005, 0.004, 8, 24]} />
       <meshStandardMaterial color={COLORS.clamp} metalness={0.9} roughness={0.2} />
     </mesh>
   )
@@ -338,14 +349,19 @@ function Shelf({
   numLevels,
   machinesPerLevel,
   label,
+  shelfDepth,
+  conduitDia,
+  machineGap,
 }: {
   position: [number, number, number]
   numLevels: number
   machinesPerLevel: number
   label: string
+  shelfDepth: number
+  conduitDia: number
+  machineGap: number
 }) {
   const shelfLength = PARAMS.shelfLength
-  const shelfDepth = PARAMS.shelfDepth
   const feetHeight = PARAMS.feetHeight
   const totalHeight = PARAMS.totalHeight
   const levelHeight = PARAMS.levelHeight
@@ -358,7 +374,7 @@ function Shelf({
   const asicCenterZ = rearZ + PROTRUSION - (PARAMS.asicD / 2)
 
   // Distribuição das máquinas
-  const totalMachinesWidth = machinesPerLevel * PARAMS.asicW + (machinesPerLevel - 1) * PARAMS.machineGap
+  const totalMachinesWidth = machinesPerLevel * PARAMS.asicW + (machinesPerLevel - 1) * machineGap
   const startX = -totalMachinesWidth / 2 + PARAMS.asicW / 2
 
   // 4 colunas nos cantos + 2 pés de reforço no meio
@@ -380,7 +396,7 @@ function Shelf({
     const panelY = levelY - (feetHeight + (numLevels * levelHeight) / 2)
     
     for (let m = 0; m < machinesPerLevel; m++) {
-      const machineX = startX + m * (PARAMS.asicW + PARAMS.machineGap)
+      const machineX = startX + m * (PARAMS.asicW + machineGap)
       cutouts.push({
         x: machineX,
         y: panelY,
@@ -460,7 +476,7 @@ function Shelf({
       {/* Níveis: Prateleiras + ASICs + Conduítes + Tomadas */}
       {Array.from({ length: numLevels }).map((_, level) => {
         const levelY = feetHeight + level * levelHeight
-        const conduitY = levelY + PARAMS.asicH + PARAMS.conduitDia / 2 + 0.02
+        const conduitY = levelY + PARAMS.asicH + conduitDia / 2 + 0.02
 
         return (
           <group key={`level-${level}`}>
@@ -473,7 +489,7 @@ function Shelf({
 
             {/* ASICs */}
             {Array.from({ length: machinesPerLevel }).map((_, m) => {
-              const machineX = startX + m * (PARAMS.asicW + PARAMS.machineGap)
+              const machineX = startX + m * (PARAMS.asicW + machineGap)
               return (
                 <ASIC
                   key={`asic-${level}-${m}`}
@@ -484,8 +500,9 @@ function Shelf({
 
             {/* Conduíte PVC (lado frio) */}
             <Conduit
-              position={[0, conduitY, frontZ + PARAMS.beamSize + PARAMS.conduitDia / 2]}
+              position={[0, conduitY, frontZ + PARAMS.beamSize + conduitDia / 2]}
               length={shelfLength - PARAMS.beamSize * 2}
+              diameter={conduitDia}
             />
 
             {/* Abraçadeiras */}
@@ -495,14 +512,15 @@ function Shelf({
               return (
                 <Clamp
                   key={`clamp-${level}-${c}`}
-                  position={[clampX, conduitY, frontZ + PARAMS.beamSize + PARAMS.conduitDia / 2]}
+                  position={[clampX, conduitY, frontZ + PARAMS.beamSize + conduitDia / 2]}
+                  diameter={conduitDia}
                 />
               )
             })}
 
             {/* Tomadas - embaixo da travessa de cada prateleira */}
             {Array.from({ length: machinesPerLevel }).map((_, m) => {
-              const machineX = startX + m * (PARAMS.asicW + PARAMS.machineGap)
+              const machineX = startX + m * (PARAMS.asicW + machineGap)
               const outletY = levelY - PARAMS.beamSize / 2 - PARAMS.outletBoxH / 2 - 0.01
               return (
                 <OutletBox
@@ -553,6 +571,9 @@ function Shelf({
 export default function ProjetoEstantes3D({
   numLevels = 5,
   machinesPerLevel = 11,
+  shelfDepth = PARAMS.shelfDepth,
+  conduitDia = PARAMS.conduitDia,
+  gap = PARAMS.machineGap,
 }: ProjetoEstantes3DProps) {
   const offsetX = (PARAMS.shelfLength + PARAMS.shelfSpacing) / 2
 
@@ -611,6 +632,9 @@ export default function ProjetoEstantes3D({
         position={[-offsetX, 0, 0]}
         numLevels={numLevels}
         machinesPerLevel={machinesPerLevel}
+        shelfDepth={shelfDepth}
+        conduitDia={conduitDia}
+        machineGap={gap}
         label="ESTANTE 1"
       />
 
@@ -619,6 +643,9 @@ export default function ProjetoEstantes3D({
         position={[offsetX, 0, 0]}
         numLevels={numLevels}
         machinesPerLevel={machinesPerLevel}
+        shelfDepth={shelfDepth}
+        conduitDia={conduitDia}
+        machineGap={gap}
         label="ESTANTE 2"
       />
 
