@@ -9,7 +9,7 @@ import * as THREE from 'three'
 // ============================================================
 const ROOM = {
   width: 6.0,          // Largura da sala = 2 x SHELF.length (COLADA nas estantes)
-  depth: 4.0,          // Profundidade da sala (Z)
+  depth: 4.0,          // Profundidade da sala HOT AISLE (Z)
   height: 2.4,         // Altura da sala = MESMA ALTURA DAS ESTANTES
   wallThickness: 0.1,  // Espessura das paredes
   doorWidth: 1.0,      // Largura da porta
@@ -17,6 +17,14 @@ const ROOM = {
   ventHeight: 0.4,     // Altura das aberturas laterais (perto do teto)
   ventFromCeiling: 0.1, // Distância do TETO até as aberturas
   topVentHeight: 0.2,  // Altura da abertura em cima da porta
+}
+
+// COLD AISLE - Ambiente fechado do lado frio com COLMEIA
+const COLD_AISLE = {
+  width: 6.0,          // Mesma largura das estantes
+  depth: 1.8,          // 1.80m de profundidade
+  height: 2.4,         // Mesma altura
+  wallThickness: 0.1,
 }
 
 const SHELF = {
@@ -46,6 +54,8 @@ const COLORS = {
   shelf: '#8494a8',         // Prateleira
   hotAir: '#ef4444',        // Ar quente
   coldAir: '#22c55e',       // Ar frio
+  honeycomb: '#8B6914',     // Colmeia evaporativa (marrom/dourado)
+  honeycombFrame: '#5a4a3a', // Moldura da colmeia
 }
 
 // ============================================================
@@ -211,6 +221,76 @@ function SimpleShelf({
           </group>
         )
       })}
+    </group>
+  )
+}
+
+// ============================================================
+// COMPONENTE: Colmeia Evaporativa (Evaporative Panel)
+// ============================================================
+function EvaporativePanel({
+  position,
+  width,
+  height,
+}: {
+  position: [number, number, number]
+  width: number
+  height: number
+}) {
+  const panelThickness = 0.15 // 15cm de espessura da colmeia
+  const frameSize = 0.08 // Moldura
+  
+  return (
+    <group position={position}>
+      {/* Moldura externa */}
+      <mesh position={[0, 0, -panelThickness / 2 - 0.01]}>
+        <boxGeometry args={[width + frameSize * 2, height + frameSize * 2, 0.05]} />
+        <meshStandardMaterial color={COLORS.honeycombFrame} metalness={0.3} roughness={0.7} />
+      </mesh>
+      
+      {/* Painel principal da colmeia (textura de colmeia) */}
+      <mesh>
+        <boxGeometry args={[width, height, panelThickness]} />
+        <meshStandardMaterial 
+          color={COLORS.honeycomb} 
+          metalness={0.1} 
+          roughness={0.9}
+          transparent={true}
+          opacity={0.85}
+        />
+      </mesh>
+      
+      {/* Padrão de colmeia - linhas verticais simulando a textura */}
+      {Array.from({ length: Math.floor(width / 0.1) }).map((_, i) => (
+        <mesh 
+          key={`v-${i}`} 
+          position={[-width / 2 + 0.05 + i * 0.1, 0, panelThickness / 2 + 0.001]}
+        >
+          <boxGeometry args={[0.005, height, 0.002]} />
+          <meshStandardMaterial color="#6B5214" />
+        </mesh>
+      ))}
+      
+      {/* Linhas horizontais */}
+      {Array.from({ length: Math.floor(height / 0.1) }).map((_, i) => (
+        <mesh 
+          key={`h-${i}`} 
+          position={[0, -height / 2 + 0.05 + i * 0.1, panelThickness / 2 + 0.001]}
+        >
+          <boxGeometry args={[width, 0.005, 0.002]} />
+          <meshStandardMaterial color="#6B5214" />
+        </mesh>
+      ))}
+      
+      {/* Label */}
+      <Text
+        position={[0, -height / 2 - 0.2, 0]}
+        fontSize={0.12}
+        color={COLORS.coldAir}
+        anchorX="center"
+      >
+        🐝 COLMEIA EVAPORATIVA
+      </Text>
     </group>
   )
 }
@@ -395,10 +475,7 @@ export default function AmbienteCompleto3D() {
       {/* ========== LADO QUENTE (atrás das estantes) - ABERTO para ar sair ========== */}
       {/* Sem parede no fundo - ar quente sai livremente */}
 
-      {/* ========== SETAS DE FLUXO DE AR ========== */}
-      {/* Ar frio entrando pela frente (verde) */}
-      <AirflowArrow start={[0, 1.5, -ROOM.depth / 2 - 0.5]} end={[0, 1.5, 0]} color={COLORS.coldAir} />
-      
+      {/* ========== SETAS DE FLUXO DE AR - HOT AISLE ========== */}
       {/* Ar quente saindo pelas laterais (perto do teto) */}
       <AirflowArrow start={[1, ROOM.height - 0.8, ROOM.depth / 4]} end={[ROOM.width / 2 + 0.5, ROOM.height - 0.8, ROOM.depth / 4]} color={COLORS.hotAir} />
       <AirflowArrow start={[-1, ROOM.height - 0.8, ROOM.depth / 4]} end={[-ROOM.width / 2 - 0.5, ROOM.height - 0.8, ROOM.depth / 4]} color={COLORS.hotAir} />
@@ -406,14 +483,105 @@ export default function AmbienteCompleto3D() {
       {/* Ar quente saindo em cima da porta */}
       <AirflowArrow start={[0, ROOM.height - 0.6, 0]} end={[0, ROOM.height - 0.6, -ROOM.depth / 2 - 0.5]} color={COLORS.hotAir} />
 
+      {/* ================================================================ */}
+      {/* ========== COLD AISLE - AMBIENTE FECHADO DO LADO FRIO ========== */}
+      {/* ================================================================ */}
+      {(() => {
+        const coldAisleZ = -ROOM.depth / 2 - COLD_AISLE.depth / 2
+        return (
+          <group>
+            {/* PISO do Cold Aisle */}
+            <mesh position={[0, -0.05, coldAisleZ]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[COLD_AISLE.width, COLD_AISLE.depth]} />
+              <meshStandardMaterial color={COLORS.floor} roughness={0.9} />
+            </mesh>
+
+            {/* TETO do Cold Aisle (completamente fechado) */}
+            <GalvanizedWall
+              position={[0, COLD_AISLE.height, coldAisleZ]}
+              size={[COLD_AISLE.width, ROOM.wallThickness, COLD_AISLE.depth]}
+            />
+
+            {/* PAREDE LATERAL ESQUERDA (completamente fechada) */}
+            <GalvanizedWall
+              position={[-COLD_AISLE.width / 2, COLD_AISLE.height / 2, coldAisleZ]}
+              size={[ROOM.wallThickness, COLD_AISLE.height, COLD_AISLE.depth]}
+            />
+
+            {/* PAREDE LATERAL DIREITA (completamente fechada) */}
+            <GalvanizedWall
+              position={[COLD_AISLE.width / 2, COLD_AISLE.height / 2, coldAisleZ]}
+              size={[ROOM.wallThickness, COLD_AISLE.height, COLD_AISLE.depth]}
+            />
+
+            {/* PAREDE FRONTAL COM COLMEIA EVAPORATIVA */}
+            {/* A colmeia ocupa quase toda a parede frontal */}
+            <EvaporativePanel
+              position={[0, COLD_AISLE.height / 2, -ROOM.depth / 2 - COLD_AISLE.depth]}
+              width={COLD_AISLE.width - 0.4}
+              height={COLD_AISLE.height - 0.3}
+            />
+
+            {/* Moldura ao redor da colmeia */}
+            {/* Parte inferior */}
+            <GalvanizedWall
+              position={[0, 0.075, -ROOM.depth / 2 - COLD_AISLE.depth]}
+              size={[COLD_AISLE.width, 0.15, ROOM.wallThickness]}
+            />
+            {/* Parte superior */}
+            <GalvanizedWall
+              position={[0, COLD_AISLE.height - 0.075, -ROOM.depth / 2 - COLD_AISLE.depth]}
+              size={[COLD_AISLE.width, 0.15, ROOM.wallThickness]}
+            />
+            {/* Lateral esquerda */}
+            <GalvanizedWall
+              position={[-COLD_AISLE.width / 2 + 0.1, COLD_AISLE.height / 2, -ROOM.depth / 2 - COLD_AISLE.depth]}
+              size={[0.2, COLD_AISLE.height, ROOM.wallThickness]}
+            />
+            {/* Lateral direita */}
+            <GalvanizedWall
+              position={[COLD_AISLE.width / 2 - 0.1, COLD_AISLE.height / 2, -ROOM.depth / 2 - COLD_AISLE.depth]}
+              size={[0.2, COLD_AISLE.height, ROOM.wallThickness]}
+            />
+
+            {/* SETAS - Ar frio da colmeia para as máquinas */}
+            <AirflowArrow 
+              start={[0, 1.2, -ROOM.depth / 2 - COLD_AISLE.depth + 0.3]} 
+              end={[0, 1.2, ROOM.depth / 2 - SHELF.depth]} 
+              color={COLORS.coldAir} 
+            />
+            <AirflowArrow 
+              start={[-1.5, 1.2, -ROOM.depth / 2 - COLD_AISLE.depth + 0.3]} 
+              end={[-1.5, 1.2, ROOM.depth / 2 - SHELF.depth]} 
+              color={COLORS.coldAir} 
+            />
+            <AirflowArrow 
+              start={[1.5, 1.2, -ROOM.depth / 2 - COLD_AISLE.depth + 0.3]} 
+              end={[1.5, 1.2, ROOM.depth / 2 - SHELF.depth]} 
+              color={COLORS.coldAir} 
+            />
+
+            {/* Label do Cold Aisle */}
+            <Text
+              position={[0, COLD_AISLE.height + 0.3, coldAisleZ]}
+              fontSize={0.18}
+              color={COLORS.coldAir}
+              anchorX="center"
+            >
+              🧊 COLD AISLE - AMBIENTE REFRIGERADO (FECHADO)
+            </Text>
+          </group>
+        )
+      })()}
+
       {/* ========== LABELS ========== */}
       <Text
-        position={[0, 0.3, -ROOM.depth / 2 - 0.3]}
+        position={[0, 0.3, -ROOM.depth / 2 - COLD_AISLE.depth - 0.5]}
         fontSize={0.15}
         color={COLORS.coldAir}
         anchorX="center"
       >
-        🟢 LADO FRIO (Entrada)
+        🟢 AR FRIO DA COLMEIA
       </Text>
       <Text
         position={[-ROOM.width / 2 - 0.3, ROOM.height - 0.8, 0]}
