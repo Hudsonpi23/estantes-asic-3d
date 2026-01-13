@@ -21,6 +21,9 @@ export default function SerralheiroPage() {
             <Link href="/serralheiro" className="nav-btn active">
               🔩 Visão Serralheiro
             </Link>
+            <Link href="/ambiente" className="nav-btn">
+              🏭 Ambiente
+            </Link>
           </nav>
         </div>
         <p>Estrutura metálica para montagem • Compensado sem aberturas</p>

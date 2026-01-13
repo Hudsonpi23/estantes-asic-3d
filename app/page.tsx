@@ -38,6 +38,9 @@ export default function Home() {
             <Link href="/serralheiro" className="nav-btn">
               🔩 Visão Serralheiro
             </Link>
+            <Link href="/ambiente" className="nav-btn">
+              🏭 Ambiente
+            </Link>
           </nav>
         </div>
         <p>Estrutura metálica para 110 Antminer S19k Pro • Lado frio + Lado quente</p>
