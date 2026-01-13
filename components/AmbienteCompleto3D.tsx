@@ -350,6 +350,32 @@ export default function AmbienteCompleto3D() {
       <SimpleShelf position={[-SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
       <SimpleShelf position={[SHELF.length / 2, 0, ROOM.depth / 2 - SHELF.depth / 2]} />
 
+      {/* ========== PAREDES LATERAIS TRASEIRAS (fecham os lados atrás das estantes) ========== */}
+      {/* Lado esquerdo - parede entre lateral e estante */}
+      <GalvanizedWall
+        position={[
+          -ROOM.width / 2 + (ROOM.width / 2 - SHELF.length) / 2,
+          ROOM.height / 2,
+          ROOM.depth / 2 - SHELF.depth / 2
+        ]}
+        size={[ROOM.width / 2 - SHELF.length, ROOM.height, ROOM.wallThickness]}
+      />
+      {/* Lado direito - parede entre lateral e estante */}
+      <GalvanizedWall
+        position={[
+          ROOM.width / 2 - (ROOM.width / 2 - SHELF.length) / 2,
+          ROOM.height / 2,
+          ROOM.depth / 2 - SHELF.depth / 2
+        ]}
+        size={[ROOM.width / 2 - SHELF.length, ROOM.height, ROOM.wallThickness]}
+      />
+
+      {/* ========== PAREDES DO FUNDO (atrás das estantes - lado quente externo) ========== */}
+      <GalvanizedWall
+        position={[0, ROOM.height / 2, ROOM.depth / 2]}
+        size={[ROOM.width, ROOM.height, ROOM.wallThickness]}
+      />
+
       {/* ========== SETAS DE FLUXO DE AR ========== */}
       {/* Ar frio entrando pela frente (verde) */}
       <AirflowArrow start={[0, 1.5, -ROOM.depth / 2 - 0.5]} end={[0, 1.5, 0]} color={COLORS.coldAir} />
