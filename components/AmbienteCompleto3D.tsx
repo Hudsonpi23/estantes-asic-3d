@@ -8,7 +8,7 @@ import * as THREE from 'three'
 // PARÂMETROS DO AMBIENTE
 // ============================================================
 const ROOM = {
-  width: 8.0,          // Largura da sala (X)
+  width: 6.0,          // Largura da sala = 2 x SHELF.length (COLADA nas estantes)
   depth: 4.0,          // Profundidade da sala (Z)
   height: 2.4,         // Altura da sala = MESMA ALTURA DAS ESTANTES
   wallThickness: 0.1,  // Espessura das paredes
