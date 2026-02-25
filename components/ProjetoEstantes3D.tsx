@@ -9,15 +9,16 @@ import * as THREE from 'three'
 // ============================================================
 const PARAMS = {
   // === CONFIGURAÇÃO GERAL ===
-  shelfLength: 3.0,           // Comprimento da estante (m)
-  totalHeight: 2.4,           // Altura total incluindo pés (m)
-  feetHeight: 0.6,            // Altura dos pés/base sem máquinas (m)
-  usableHeight: 1.8,          // Altura útil para máquinas (m)
-  levelHeight: 0.35,          // Altura de cada fileira (m)
+  shelfLength: 3.0,           // Comprimento total da estante (3000 mm)
+  totalHeight: 2.4,           // Altura total incluindo pés (2400 mm) - MANTIDA
+  feetHeight: 0.6,            // Altura dos pés/base sem máquinas (600 mm)
+  usableHeight: 1.8,          // Altura útil para máquinas (1800 mm)
+  levelHeight: 0.35,          // Altura de cada fileira (m) - mantida
 
-  // === PRATELEIRAS ===
-  shelfDepth: 0.60,           // Profundidade da estante (m) - MODELO SERRALHEIRO
-  shelfThickness: 0.003,      // Espessura da chapa da prateleira (m)
+  // === PRATELEIRAS / PROFUNDIDADE ===
+  shelfDepth: 0.5,            // Profundidade total da estante (500 mm) - INDUSTRIAL PESADO
+  shelfSteelThickness: 0.003, // Espessura chapa aço piso (3 mm) - configurável
+  shelfSteelThicknessHeavy: 0.005, // Versão "blindada" 5 mm (opcional)
 
   // === DIMENSÕES DO ASIC (Antminer S19k Pro) ===
   asicW: 0.195,               // Largura (ao longo do comprimento) (m)
@@ -27,8 +28,16 @@ const PARAMS = {
   // === PROTRUSÃO (quanto sai para fora) ===
   protrusionPct: 0.30,        // 30% para fora (~12cm)
 
-  // === ESTRUTURA METÁLICA ===
-  beamSize: 0.04,             // Perfil metalon/cantoneira 40mm (m)
+  // === ESTRUTURA METÁLICA - INDUSTRIAL PESADO ===
+  columnSize: 0.06,           // Colunas: metalon 60x60x4 (m)
+  longarinaH: 0.04,           // Longarina principal: 80x40x4 (altura ~40 mm)
+  longarinaW: 0.08,           // Largura da longarina (80 mm) ao longo da profundidade
+  brace50x30H: 0.03,          // Travessas apoio: 50x30x3 (altura 30 mm)
+  brace50x30W: 0.05,          // Largura (50 mm)
+  baseBrace40H: 0.04,         // Travamento inferior: 40x40x3
+  baseBrace40W: 0.04,
+  diagBrace30: 0.03,          // Contraventamento: 30x30x3 (seção quadrada)
+  bottomBraceHeight: 0.3,     // Altura do travamento inferior (300 mm do piso)
 
   // === CONDUÍTE E TOMADAS (LADO FRIO) ===
   conduitDia: 0.05,           // Diâmetro do conduíte 50mm (m)
@@ -86,23 +95,92 @@ function VerticalColumn({
 }) {
   return (
     <mesh position={position}>
-      <boxGeometry args={[PARAMS.beamSize, height, PARAMS.beamSize]} />
+      {/* Coluna 60x60x4 mm (escala em metros) */}
+      <boxGeometry args={[PARAMS.columnSize, height, PARAMS.columnSize]} />
       <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
     </mesh>
   )
 }
 
 // ============================================================
-// COMPONENTE: Travessa Horizontal
+// COMPONENTES ESTRUTURA METÁLICA - INDUSTRIAL PESADO
 // ============================================================
-function HorizontalBeam({
+
+// Longarina principal 80x40x4 (ao longo do comprimento, frente/fundo)
+function MainLongarina({
+  startX,
+  endX,
+  y,
+  z,
+}: {
+  startX: number
+  endX: number
+  y: number
+  z: number
+}) {
+  const length = endX - startX
+  const midX = (startX + endX) / 2
+  return (
+    <mesh position={[midX, y, z]}>
+      <boxGeometry args={[length, PARAMS.longarinaH, PARAMS.longarinaW]} />
+      <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
+    </mesh>
+  )
+}
+
+// Travessa de apoio 50x30x3 (sentido profundidade, 500 mm)
+function SupportBrace({
+  x,
+  y,
+  frontZ,
+  rearZ,
+}: {
+  x: number
+  y: number
+  frontZ: number
+  rearZ: number
+}) {
+  const length = rearZ - frontZ
+  const midZ = (frontZ + rearZ) / 2
+  return (
+    <mesh position={[x, y, midZ]}>
+      <boxGeometry args={[PARAMS.brace50x30W, PARAMS.brace50x30H, length]} />
+      <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
+    </mesh>
+  )
+}
+
+// Travamento inferior 40x40x3 (retângulo a 300 mm do piso)
+function BaseBrace({
   start,
   end,
-  isLongitudinal = false,
 }: {
   start: [number, number, number]
   end: [number, number, number]
-  isLongitudinal?: boolean
+}) {
+  const length = Math.sqrt(
+    (end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2 + (end[2] - start[2]) ** 2
+  )
+  const midPoint: [number, number, number] = [
+    (start[0] + end[0]) / 2,
+    (start[1] + end[1]) / 2,
+    (start[2] + end[2]) / 2,
+  ]
+  return (
+    <mesh position={midPoint}>
+      <boxGeometry args={[length, PARAMS.baseBrace40H, PARAMS.baseBrace40W]} />
+      <meshStandardMaterial color={COLORS.metal} metalness={0.8} roughness={0.25} />
+    </mesh>
+  )
+}
+
+// Contraventamento em X (traseiro) 30x30x3
+function DiagonalBrace({
+  start,
+  end,
+}: {
+  start: [number, number, number]
+  end: [number, number, number]
 }) {
   const length = Math.sqrt(
     (end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2 + (end[2] - start[2]) ** 2
@@ -113,30 +191,42 @@ function HorizontalBeam({
     (start[2] + end[2]) / 2,
   ]
 
+  // Vetor direção
+  const dx = end[0] - start[0]
+  const dy = end[1] - start[1]
+  const dz = end[2] - start[2]
+
+  // Ângulos aproximados (considerando plano vertical traseiro, dz ≈ 0)
+  const rotY = Math.atan2(dz, dx)
+  const rotZ = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz))
+
   return (
-    <mesh position={midPoint} rotation={isLongitudinal ? [0, 0, 0] : [0, Math.PI / 2, 0]}>
-      <boxGeometry args={[length, PARAMS.beamSize, PARAMS.beamSize]} />
-      <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
+    <mesh position={midPoint} rotation={[0, rotY, rotZ]}>
+      <boxGeometry args={[length, PARAMS.diagBrace30, PARAMS.diagBrace30]} />
+      <meshStandardMaterial color={COLORS.metal} metalness={0.85} roughness={0.3} />
     </mesh>
   )
 }
 
 // ============================================================
-// COMPONENTE: Prateleira
+// COMPONENTE: Chapa de Aço (piso da prateleira) por sessão
 // ============================================================
-function ShelfPlate({
+function SteelShelfPlate({
   position,
   width,
   depth,
+  heavy = false,
 }: {
   position: [number, number, number]
   width: number
   depth: number
+  heavy?: boolean
 }) {
+  const thickness = heavy ? PARAMS.shelfSteelThicknessHeavy : PARAMS.shelfSteelThickness
   return (
     <mesh position={position}>
-      <boxGeometry args={[width, PARAMS.shelfThickness, depth]} />
-      <meshStandardMaterial color={COLORS.shelf} metalness={0.5} roughness={0.4} />
+      <boxGeometry args={[width, thickness, depth]} />
+      <meshStandardMaterial color={COLORS.shelf} metalness={0.6} roughness={0.4} />
     </mesh>
   )
 }
@@ -367,8 +457,11 @@ function Shelf({
   const levelHeight = PARAMS.levelHeight
 
   // Coordenadas de referência
-  const frontZ = -shelfDepth / 2  // Lado frio (frente)
-  const rearZ = shelfDepth / 2    // Lado quente (fundo)
+  const frontZ = -shelfDepth / 2  // Lado frio (frente, z = 0 mm)
+  const rearZ = shelfDepth / 2    // Lado quente (fundo, z = 500 mm)
+  const leftX = -shelfLength / 2  // x = 0 mm
+  const centerX = 0               // x = 1500 mm
+  const rightX = shelfLength / 2  // x = 3000 mm
   
   // Posição Z da ASIC (70% dentro, 30% fora)
   const asicCenterZ = rearZ + PROTRUSION - (PARAMS.asicD / 2)
@@ -377,16 +470,14 @@ function Shelf({
   const totalMachinesWidth = machinesPerLevel * PARAMS.asicW + (machinesPerLevel - 1) * machineGap
   const startX = -totalMachinesWidth / 2 + PARAMS.asicW / 2
 
-  // 4 colunas nos cantos + 2 pés de reforço no meio
+  // 6 colunas/pés: esquerda, centro, direita (frente e fundo)
   const columns: [number, number, number][] = [
-    // Cantos
-    [-shelfLength / 2 + PARAMS.beamSize / 2, totalHeight / 2, frontZ + PARAMS.beamSize / 2],
-    [shelfLength / 2 - PARAMS.beamSize / 2, totalHeight / 2, frontZ + PARAMS.beamSize / 2],
-    [-shelfLength / 2 + PARAMS.beamSize / 2, totalHeight / 2, rearZ - PARAMS.beamSize / 2],
-    [shelfLength / 2 - PARAMS.beamSize / 2, totalHeight / 2, rearZ - PARAMS.beamSize / 2],
-    // PÉS DE REFORÇO NO MEIO (2 pés - frente e fundo)
-    [0, totalHeight / 2, frontZ + PARAMS.beamSize / 2],  // Meio frente
-    [0, totalHeight / 2, rearZ - PARAMS.beamSize / 2],   // Meio fundo
+    [leftX, totalHeight / 2, frontZ],
+    [leftX, totalHeight / 2, rearZ],
+    [centerX, totalHeight / 2, frontZ],
+    [centerX, totalHeight / 2, rearZ],
+    [rightX, totalHeight / 2, frontZ],
+    [rightX, totalHeight / 2, rearZ],
   ]
 
   // Recortes para o painel traseiro (apenas na área das máquinas, NÃO nos 60cm de baixo)
@@ -427,53 +518,90 @@ function Shelf({
         <VerticalColumn key={`col-${i}`} position={col} height={totalHeight} />
       ))}
 
-      {/* Travessas horizontais em cada nível */}
+      {/* Longarinas principais 80x40x4 em cada nível (frente e fundo) */}
       {Array.from({ length: numLevels + 1 }).map((_, level) => {
         const y = level === 0 ? feetHeight : feetHeight + level * levelHeight
         return (
-          <group key={`level-beams-${level}`}>
-            {/* Travessa frontal */}
-            <HorizontalBeam
-              start={[-shelfLength / 2, y, frontZ]}
-              end={[shelfLength / 2, y, frontZ]}
-              isLongitudinal={true}
-            />
-            {/* Travessa traseira */}
-            <HorizontalBeam
-              start={[-shelfLength / 2, y, rearZ]}
-              end={[shelfLength / 2, y, rearZ]}
-              isLongitudinal={true}
-            />
-            {/* Travessas laterais */}
-            <mesh position={[-shelfLength / 2, y, 0]}>
-              <boxGeometry args={[PARAMS.beamSize, PARAMS.beamSize, shelfDepth]} />
-              <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
-            </mesh>
-            <mesh position={[shelfLength / 2, y, 0]}>
-              <boxGeometry args={[PARAMS.beamSize, PARAMS.beamSize, shelfDepth]} />
-              <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
-            </mesh>
+          <group key={`level-beams-${label}-${level}`}>
+            <MainLongarina startX={leftX} endX={centerX} y={y} z={frontZ} />
+            <MainLongarina startX={centerX} endX={rightX} y={y} z={frontZ} />
+            <MainLongarina startX={leftX} endX={centerX} y={y} z={rearZ} />
+            <MainLongarina startX={centerX} endX={rightX} y={y} z={rearZ} />
           </group>
         )
       })}
 
-      {/* Travessas na base (pés) com reforço central */}
+      {/* Travessas de apoio 50x30x3 em cada sessão e nível (3 por sessão) */}
+      {Array.from({ length: numLevels }).map((_, level) => {
+        const y = feetHeight + level * levelHeight
+
+        // Sessão esquerda (0–1500 mm) e direita (1500–3000 mm)
+        const sessionOffset = shelfLength / 4 // 0.75 m em cada lado
+        const sessionHalfSpan = shelfLength / 4 // 0.75 m
+
+        const leftSessionX = -sessionOffset
+        const rightSessionX = sessionOffset
+
+        const xPositionsLeft = [
+          leftSessionX - sessionHalfSpan * (1 / 3), // ~500 mm do apoio esquerdo
+          leftSessionX,                             // meio do vão
+          leftSessionX + sessionHalfSpan * (1 / 3), // ~500 mm do apoio direito da sessão
+        ]
+
+        const xPositionsRight = [
+          rightSessionX - sessionHalfSpan * (1 / 3),
+          rightSessionX,
+          rightSessionX + sessionHalfSpan * (1 / 3),
+        ]
+
+        return (
+          <group key={`support-braces-${label}-${level}`}>
+            {xPositionsLeft.map((x, idx) => (
+              <SupportBrace
+                key={`left-${level}-${idx}`}
+                x={x}
+                y={y}
+                frontZ={frontZ}
+                rearZ={rearZ}
+              />
+            ))}
+            {xPositionsRight.map((x, idx) => (
+              <SupportBrace
+                key={`right-${level}-${idx}`}
+                x={x}
+                y={y}
+                frontZ={frontZ}
+                rearZ={rearZ}
+              />
+            ))}
+          </group>
+        )
+      })}
+
+      {/* Travamento inferior 40x40x3 a 300 mm do piso (retângulo completo) */}
       <group>
-        <HorizontalBeam start={[-shelfLength / 2, 0, frontZ]} end={[shelfLength / 2, 0, frontZ]} isLongitudinal={true} />
-        <HorizontalBeam start={[-shelfLength / 2, 0, rearZ]} end={[shelfLength / 2, 0, rearZ]} isLongitudinal={true} />
-        <mesh position={[-shelfLength / 2, 0, 0]}>
-          <boxGeometry args={[PARAMS.beamSize, PARAMS.beamSize, shelfDepth]} />
-          <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
-        </mesh>
-        <mesh position={[shelfLength / 2, 0, 0]}>
-          <boxGeometry args={[PARAMS.beamSize, PARAMS.beamSize, shelfDepth]} />
-          <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
-        </mesh>
-        {/* Reforço central na base */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[PARAMS.beamSize, PARAMS.beamSize, shelfDepth]} />
-          <meshStandardMaterial color={COLORS.metal} metalness={0.7} roughness={0.3} />
-        </mesh>
+        {/* Frente: 0 – 1500 – 3000 mm */}
+        <BaseBrace start={[leftX, PARAMS.bottomBraceHeight, frontZ]} end={[centerX, PARAMS.bottomBraceHeight, frontZ]} />
+        <BaseBrace start={[centerX, PARAMS.bottomBraceHeight, frontZ]} end={[rightX, PARAMS.bottomBraceHeight, frontZ]} />
+        {/* Fundo */}
+        <BaseBrace start={[leftX, PARAMS.bottomBraceHeight, rearZ]} end={[centerX, PARAMS.bottomBraceHeight, rearZ]} />
+        <BaseBrace start={[centerX, PARAMS.bottomBraceHeight, rearZ]} end={[rightX, PARAMS.bottomBraceHeight, rearZ]} />
+        {/* Ligações frente-fundo (esquerda, centro, direita) */}
+        <BaseBrace start={[leftX, PARAMS.bottomBraceHeight, frontZ]} end={[leftX, PARAMS.bottomBraceHeight, rearZ]} />
+        <BaseBrace start={[centerX, PARAMS.bottomBraceHeight, frontZ]} end={[centerX, PARAMS.bottomBraceHeight, rearZ]} />
+        <BaseBrace start={[rightX, PARAMS.bottomBraceHeight, frontZ]} end={[rightX, PARAMS.bottomBraceHeight, rearZ]} />
+      </group>
+
+      {/* Contraventamento traseiro em X (entre pé esquerdo e direito) */}
+      <group>
+        <DiagonalBrace
+          start={[leftX, feetHeight, rearZ]}
+          end={[rightX, totalHeight, rearZ]}
+        />
+        <DiagonalBrace
+          start={[rightX, feetHeight, rearZ]}
+          end={[leftX, totalHeight, rearZ]}
+        />
       </group>
 
       {/* Níveis: Prateleiras + ASICs + Conduítes + Tomadas */}
@@ -483,11 +611,16 @@ function Shelf({
 
         return (
           <group key={`level-${level}`}>
-            {/* Prateleira */}
-            <ShelfPlate
-              position={[0, levelY, 0]}
-              width={shelfLength - PARAMS.beamSize * 2}
-              depth={shelfDepth - PARAMS.beamSize * 2}
+            {/* Piso em chapa de aço 3 mm por sessão (1500 x 500 mm) */}
+            <SteelShelfPlate
+              position={[(leftX + centerX) / 2, levelY, 0]}
+              width={shelfLength / 2 - 0.02}
+              depth={shelfDepth - 0.02}
+            />
+            <SteelShelfPlate
+              position={[(centerX + rightX) / 2, levelY, 0]}
+              width={shelfLength / 2 - 0.02}
+              depth={shelfDepth - 0.02}
             />
 
             {/* ASICs */}
@@ -536,12 +669,12 @@ function Shelf({
         )
       })}
 
-      {/* PAREDE DE COMPENSADO com aberturas - VAI ATÉ O CHÃO */}
+      {/* PAREDE DE COMPENSADO FECHADA (sem recortes) - VAI ATÉ O CHÃO */}
       <PlywoodWall
-        position={[0, (feetHeight + numLevels * levelHeight) / 2, rearZ - 0.009]}
-        width={shelfLength - PARAMS.beamSize * 2}
+        position={[0, (feetHeight + numLevels * levelHeight) / 2, rearZ - 0.012]}
+        width={shelfLength}
         height={feetHeight + numLevels * levelHeight}
-        cutouts={cutouts}
+        cutouts={[]} // fundo fechado, sem aberturas
       />
 
       {/* Labels de orientação */}
@@ -672,6 +805,82 @@ export default function ProjetoEstantes3D({
         {`${numLevels * machinesPerLevel * 2} máquinas • ${numLevels} fileiras • 120 TH/máquina`}
       </Text>
 
+      {/* Quadro de materiais resumido (vista técnica para serralheiro) */}
+      <group position={[5, 2.2, -4]}>
+        <Text
+          position={[0, 0.6, 0]}
+          fontSize={0.08}
+          color="#e5e7eb"
+          anchorX="left"
+          anchorY="top"
+        >
+          QUADRO DE MATERIAIS (INDUSTRIAL PESADO)
+        </Text>
+        <Text
+          position={[0, 0.45, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="left"
+          anchorY="top"
+        >
+          {`Colunas (6x): metalon 60x60x4 • Altura ${PARAMS.totalHeight.toFixed(2)} m`}
+        </Text>
+        <Text
+          position={[0, 0.32, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="left"
+          anchorY="top"
+        >
+          {`Longarinas: 80x40x4 • Vãos 0-1500-3000 mm (frente e fundo, todos níveis)`}
+        </Text>
+        <Text
+          position={[0, 0.19, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="left"
+          anchorY="top"
+        >
+          {`Travessas apoio: 50x30x3 • 3 por sessão/nível (em 500/750/1000 mm)`}
+        </Text>
+        <Text
+          position={[0, 0.06, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="left"
+          anchorY="top"
+        >
+          {`Travamento inferior: 40x40x3 a 300 mm • retângulo completo + ligações`}
+        </Text>
+        <Text
+          position={[0, -0.07, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="left"
+          anchorY="top"
+        >
+          {`Contraventamento: 30x30x3 em X no fundo (opcional diagonal lateral)`}
+        </Text>
+        <Text
+          position={[0, -0.2, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="left"
+          anchorY="top"
+        >
+          {`Pisos: chapas aço 3 mm (1500x500) por sessão/nível • opção 5 mm blindado`}
+        </Text>
+        <Text
+          position={[0, -0.33, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="left"
+          anchorY="top"
+        >
+          {`Fundo: compensado 18-25 mm parafusado em grelha metálica (40x20/30x30)`}
+        </Text>
+      </group>
+
       {/* Escala */}
       <group position={[-5, 0.01, 5]}>
         <mesh>
@@ -690,6 +899,126 @@ export default function ProjetoEstantes3D({
       <Text position={[0, 0.5, 3]} fontSize={0.08} color="#ef4444" anchorX="center" anchorY="middle">
         ← AR QUENTE SAI (VERMELHO) ←
       </Text>
+
+      {/* VISTA FRONTAL - Cotas principais (comprimento 3000 mm e altura 2400 mm) */}
+      <group position={[0, 0, -4]}>
+        {/* Linha de cota comprimento */}
+        <mesh position={[0, 0.05, 0]}>
+          <boxGeometry args={[PARAMS.shelfLength, 0.005, 0.005]} />
+          <meshStandardMaterial color="#e5e7eb" />
+        </mesh>
+        <Text
+          position={[0, 0.12, 0]}
+          fontSize={0.08}
+          color="#e5e7eb"
+          anchorX="center"
+          anchorY="middle"
+        >
+          3000 mm
+        </Text>
+        {/* Linha de cota altura */}
+        <mesh position={[-(PARAMS.shelfLength / 2) - 0.2, PARAMS.totalHeight / 2, 0]}>
+          <boxGeometry args={[0.005, PARAMS.totalHeight, 0.005]} />
+          <meshStandardMaterial color="#e5e7eb" />
+        </mesh>
+        <Text
+          position={[-(PARAMS.shelfLength / 2) - 0.25, PARAMS.totalHeight / 2, 0]}
+          fontSize={0.08}
+          color="#e5e7eb"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI / 2, 0]}
+        >
+          2400 mm
+        </Text>
+        <Text
+          position={[0, PARAMS.totalHeight + 0.25, 0]}
+          fontSize={0.09}
+          color="#fbbf24"
+          anchorX="center"
+          anchorY="middle"
+        >
+          VISTA FRONTAL
+        </Text>
+      </group>
+
+      {/* VISTA LATERAL - Profundidade 500 mm e travamento a 300 mm */}
+      <group position={[4.5, 0, 0]}>
+        {/* Linha de cota profundidade */}
+        <mesh position={[0, 0.05, 0]}>
+          <boxGeometry args={[0.005, 0.005, PARAMS.shelfDepth]} />
+          <meshStandardMaterial color="#e5e7eb" />
+        </mesh>
+        <Text
+          position={[0, 0.12, 0]}
+          fontSize={0.08}
+          color="#e5e7eb"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI, 0]}
+        >
+          500 mm
+        </Text>
+        {/* Linha de cota travamento inferior a 300 mm */}
+        <mesh position={[0.3, PARAMS.bottomBraceHeight / 2, 0]}>
+          <boxGeometry args={[0.005, PARAMS.bottomBraceHeight, 0.005]} />
+          <meshStandardMaterial color="#fbbf24" />
+        </mesh>
+        <Text
+          position={[0.35, PARAMS.bottomBraceHeight / 2, 0]}
+          fontSize={0.07}
+          color="#fbbf24"
+          anchorX="left"
+          anchorY="middle"
+          rotation={[0, -Math.PI / 2, 0]}
+        >
+          300 mm
+        </Text>
+        <Text
+          position={[0, PARAMS.totalHeight + 0.25, 0]}
+          fontSize={0.09}
+          color="#fbbf24"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI, 0]}
+        >
+          VISTA LATERAL
+        </Text>
+      </group>
+
+      {/* VISTA TRASEIRA - Grelha e painel de compensado */}
+      <group position={[0, 0, 4.5]}>
+        <Text
+          position={[0, PARAMS.totalHeight + 0.25, 0]}
+          fontSize={0.09}
+          color="#fbbf24"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI, 0]}
+        >
+          VISTA TRASEIRA
+        </Text>
+        <Text
+          position={[0, PARAMS.totalHeight - 0.2, 0]}
+          fontSize={0.07}
+          color="#e5e7eb"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI, 0]}
+        >
+          Grelha metálica para compensado 18–25 mm
+        </Text>
+        <Text
+          position={[0, PARAMS.totalHeight - 0.35, 0]}
+          fontSize={0.06}
+          color="#d1d5db"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI, 0]}
+        >
+          Montantes a cada 400–500 mm • Parafusos ~200 mm
+        </Text>
+      </group>
     </Canvas>
   )
 }
